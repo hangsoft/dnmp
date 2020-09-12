@@ -1,0 +1,66 @@
+version: "3"
+services:
+  nginx:
+    image: nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "./www:/www"
+      - "./service/nginx/etc/nginx.conf:/etc/nginx/nginx.conf"
+      - "./service/nginx/etc/conf.d/:/etc/nginx/conf.d/"
+      - "./log/nginx/:/var/log/nginx/"
+    environment:
+      TZ: "Asia/Shanghai"
+    depends_on:
+      - php-fpm
+    restart: always
+    networks:
+      - default
+
+  php-fpm:
+    build: service/php-fpm
+    container_name: php-fpm
+    volumes:
+      - "./www:/www"
+      - "./service/php-fpm/etc/supervisor/conf.d:/etc/supervisor/conf.d/"
+      - "./log/php-fpm/supervisor/:/var/log/supervisor/"
+    cap_add:
+      - SYS_PTRACE
+    depends_on:
+      - mysql
+      - redis
+    restart: always
+    networks:
+      - default
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./service/mysql/data:/var/lib/mysql
+    restart: always
+    networks:
+      - default
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      TZ: "Asia/Shanghai"
+
+  redis:
+    image: redis:6
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./service/redis/data:/data
+    restart: always
+    networks:
+      - default
+    environment:
+      TZ: "Asia/Shanghai"
+
+networks:
+  default:
